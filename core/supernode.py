@@ -1,20 +1,20 @@
 # /core/supernode.py
-import numpy as np
-from config import config
-from utils.evaluation import evaluate_fitness
 
 class SuperNode:
-    def __init__(self, supernode_id, neighbors):
+    def __init__(self, supernode_id, nodes):
         self.supernode_id = supernode_id
-        self.neighbors = neighbors
-        self.best_solution = None
+        self.nodes = nodes  # List of Node instances
 
     def sync_with_peers(self):
-        """Exchange solutions with neighboring supernodes."""
-        for peer in self.neighbors:
-            print(f"🔄 SuperNode {self.supernode_id} is synchronizing solutions with peer SuperNode {peer.supernode_id}")
-            if peer.best_solution is not None:
-                peer_confidence = evaluate_fitness(peer.best_solution, None, None)
-                if self.best_solution is None or peer_confidence > evaluate_fitness(self.best_solution, None, None):
-                    self.best_solution = peer.best_solution
-                    print(f"📡 SuperNode {self.supernode_id} accepted a better solution from SuperNode {peer.supernode_id} with confidence {peer_confidence:.4f}")
+        """Placeholder for syncing with other supernodes (future extension)."""
+        pass
+
+    def broadcast_best_solution(self):
+        """Optional: Share best solution across nodes in this cluster."""
+        best_node = max(self.nodes, key=lambda n: n.best_fitness)
+        for node in self.nodes:
+            if node != best_node and best_node.best_fitness > node.best_fitness:
+                node.population = best_node.best_solution
+                node.best_fitness = best_node.best_fitness
+                node.best_solution = best_node.best_solution
+                print(f"📢 SuperNode {self.supernode_id}: Broadcast better solution to Node {node.node_id}")

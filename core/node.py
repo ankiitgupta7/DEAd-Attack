@@ -1,4 +1,5 @@
 # /core/node.py
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -12,15 +13,27 @@ class Node:
         self.model = model
         self.target_class = target_class
         self.population = self.initialize_population()
-        self.buffer = []  # Stores neighbor solutions
+        self.buffer = []  # Stores neighbor solutions (List[Node])
         self.best_solution = None
-        self.best_fitness = 0.0  # <-- Add this line
-        self.confidence_progress = []  # To track confidence progression
+        self.best_fitness = 0.0
+        self.confidence_progress = []  # Track confidence progression
 
     def initialize_population(self):
         # Generate a random 8x8 grayscale image with pixel values [0-16]
         return np.random.randint(0, 17, (8, 8))
-    
+
+    def communicate_with_neighbors(self):
+        """Exchange solutions with neighbors every 'communication_interval' generations."""
+        for neighbor in self.buffer:
+            if neighbor.best_solution is not None:
+                neighbor_conf = evaluate_fitness(neighbor.best_solution, self.model, self.target_class)
+                my_conf = evaluate_fitness(self.population, self.model, self.target_class)
+                if neighbor_conf > my_conf:
+                    self.population = neighbor.best_solution
+                    self.best_fitness = neighbor_conf
+                    self.best_solution = neighbor.best_solution
+                    print(f"Node {self.node_id} adopted a better solution from neighbor with confidence {neighbor_conf:.4f}")
+
     def save_image(self, image, gen, confidence):
         """Save the 8x8 evolved image for visualization."""
         output_dir = "output_images"
@@ -43,49 +56,43 @@ class Node:
         plt.close()
 
     def evolve(self):
+        """Main evolutionary loop."""
         for gen in range(config.max_generations):
-            # Mutate and evaluate population
-            mutated_image = mutate(self.population, config.mutation_rate)
+            # Current & mutated solution
             current_confidence = evaluate_fitness(self.population, self.model, self.target_class)
+            mutated_image = mutate(self.population, config.mutation_rate)
             mutated_confidence = evaluate_fitness(mutated_image, self.model, self.target_class)
 
-            # Log confidence progression
+            # Track confidence progression
             self.confidence_progress.append(current_confidence)
 
-            # Save evolved image at intervals (e.g., every 5 generations)
+            # Possibly save an image
             if gen % 5 == 0 or mutated_confidence >= config.target_confidence:
                 self.save_image(mutated_image, gen, mutated_confidence)
 
-            # Selection: Keep the mutated solution if it's better
+            # Selection: keep mutated if it's better
             if mutated_confidence > current_confidence:
                 self.population = mutated_image
-                print(f"  Node {self.node_id}: New solution accepted with confidence {mutated_confidence:.4f}")
+                # print(f"Node {self.node_id}: New solution accepted with confidence {mutated_confidence:.4f}")
 
-            # Always track the best solution seen so far
+            # Always track best fitness
             if mutated_confidence > self.best_fitness:
                 self.best_fitness = mutated_confidence
                 self.best_solution = mutated_image
 
-            # Stop if threshold is met
+            # Check termination
             if mutated_confidence >= config.target_confidence:
-                self.save_image(mutated_image, gen, mutated_confidence)
                 print(f"Node {self.node_id} found a solution with confidence {mutated_confidence:.4f}")
+                self.save_image(mutated_image, gen, mutated_confidence)
                 self.plot_confidence_progress()
                 return
 
-        # If we finish all generations without meeting threshold
+            # ▶️ Communicate with neighbors at interval (if more than 0 generations)
+            if gen > 0 and (gen % config.communication_interval == 0):
+                # print(f"Node {self.node_id} is communicating with neighbors at generation {gen}.")
+                self.communicate_with_neighbors()
+
+        # After finishing all generations
+        print(f"Node {self.node_id} did not meet threshold after {config.max_generations} generations.")
         self.save_image(self.population, config.max_generations, current_confidence)
         self.plot_confidence_progress()
-
-
-    def communicate_with_neighbors(self):
-        """Exchange solutions with neighbors periodically."""
-        for neighbor in self.buffer:
-            print(f"Node {self.node_id} is communicating with neighbors, sending its solution...")
-            neighbor_solution = neighbor.best_solution
-            if neighbor_solution is not None:
-                neighbor_confidence = evaluate_fitness(neighbor_solution, self.model, self.target_class)
-                current_confidence = evaluate_fitness(self.population, self.model, self.target_class)
-                if neighbor_confidence > current_confidence:
-                    self.population = neighbor_solution
-                    print(f"📬 Node {self.node_id} received a better solution from a neighbor with confidence {neighbor_confidence:.4f}")
