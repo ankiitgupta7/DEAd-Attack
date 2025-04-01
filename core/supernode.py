@@ -10,6 +10,7 @@ class SuperNode:
         self.best_solution = None
 
     def sync_with_peers(self):
+        """Exchange solutions with neighboring supernodes."""
         for peer in self.neighbors:
             print(f"🔄 SuperNode {self.supernode_id} is synchronizing solutions with peer SuperNode {peer.supernode_id}")
             if peer.best_solution is not None:

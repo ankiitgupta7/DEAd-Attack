@@ -8,7 +8,7 @@ neighbors_per_node = 3     # Number of neighbors per node
 # Evolution parameters
 population_size = 50       # Population size per node
 mutation_rate = 0.01       # Mutation rate for pixel modifications
-max_generations = 30       # Max generations before termination
+max_generations = 300       # Max generations before termination
 target_confidence = 0.99 # Confidence threshold to terminate
 
 # Communication parameters
