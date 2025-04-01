@@ -25,7 +25,7 @@ class Node:
         return np.random.randint(0, 17, (8, 8))
 
     def save_image(self, image, gen, confidence, round_num=None):
-        output_dir = f"output_images/{self.global_id}/R{round_num}" if round_num is not None else f"output_images/{self.global_id}"
+        output_dir = f"output_images/R{round_num}/{self.global_id}" if round_num is not None else f"output_images/{self.global_id}"
         os.makedirs(output_dir, exist_ok=True)
         tag = f"R{round_num}_" if round_num is not None else ""
         filename = f"{tag}{self.global_id}_gen_{gen}.png"
