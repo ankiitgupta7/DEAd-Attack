@@ -16,4 +16,4 @@ class CommandAndControl:
             if node.best_solution is not None and evaluate_fitness(node.best_solution, node.model, node.target_class) >= config.target_confidence:
                 self.terminated = True
                 print("Termination condition met. System stopping.")
-                break
+                return self.terminated

@@ -14,6 +14,7 @@ class Node:
         self.population = self.initialize_population()
         self.buffer = []  # Stores neighbor solutions
         self.best_solution = None
+        self.best_fitness = 0.0  # <-- Add this line
         self.confidence_progress = []  # To track confidence progression
 
     def initialize_population(self):
@@ -60,17 +61,22 @@ class Node:
                 self.population = mutated_image
                 print(f"  Node {self.node_id}: New solution accepted with confidence {mutated_confidence:.4f}")
 
-            # Save final best image if confidence is met
-            if mutated_confidence >= config.target_confidence:
+            # Always track the best solution seen so far
+            if mutated_confidence > self.best_fitness:
+                self.best_fitness = mutated_confidence
                 self.best_solution = mutated_image
+
+            # Stop if threshold is met
+            if mutated_confidence >= config.target_confidence:
                 self.save_image(mutated_image, gen, mutated_confidence)
                 print(f"Node {self.node_id} found a solution with confidence {mutated_confidence:.4f}")
                 self.plot_confidence_progress()
                 return
 
-        # Save final evolved image if no solution was found
+        # If we finish all generations without meeting threshold
         self.save_image(self.population, config.max_generations, current_confidence)
         self.plot_confidence_progress()
+
 
     def communicate_with_neighbors(self):
         """Exchange solutions with neighbors periodically."""

@@ -29,35 +29,31 @@ def print_summary(clusters):
                 print(f"Node {node.node_id} - Final Confidence: {confidence:.4f}")
 
 def run_simulation(model, target_class):
-    print("Initializing clusters and nodes...")
-    
+    print("🔄 Starting evolution process...")
+
     clusters = initialize_clusters(model, target_class)
     candc = CommandAndControl()
-    
+
+    # Register all nodes with C&C
     for _, nodes in clusters:
         for node in nodes:
             candc.assign_node(node)
-    
-    print("Starting evolution process...")
-    
-    # Run the evolution until a solution is found
-    for gen in range(config.max_generations):
+
+    # MAIN LOOP
+    while not candc.terminated:
         for _, nodes in clusters:
             for node in nodes:
                 node.evolve()
-        
-        if gen % config.supernode_sync_interval == 0:
-            for supernode, _ in clusters:
-                supernode.sync_with_peers()
 
-        if candc.check_termination():
-            print("Termination condition met. System stopping.")
-            break
+                # 👉 Immediately check if some node reached threshold
+                candc.check_termination()
+                if candc.terminated:
+                    print("🔎 A node has reached the threshold. Stopping now.")
+                    break  # breaks out of node loop
 
-    print("Evolution completed successfully.")
-    
-    # Plot combined confidence progression for selected nodes
-    plot_combined_progress(clusters)
+            if candc.terminated:
+                break  # breaks out of cluster loop
+        # Potentially re-check here if you want
+        # candc.check_termination()
 
-    # Print summary of final best solutions
-    print_summary(clusters)
+    print("✅ Simulation ended (terminated =", candc.terminated, ")")
