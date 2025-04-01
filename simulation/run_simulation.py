@@ -56,7 +56,7 @@ def run_simulation(model, target_class):
         print(f"\n🌀 Round {round}")
         for _, nodes in clusters:
             for node in nodes:
-                node.evolve()
+                node.evolve(round_num=round)
                 candc.check_termination()
                 if candc.terminated:
                     print("🎯 A node has reached the threshold. Stopping now.")
