@@ -51,10 +51,10 @@ def run_simulation(model, target_class):
                 supernode.sync_with_peers()
 
         if candc.check_termination():
-            print("✅ Termination condition met. System stopping.")
+            print("Termination condition met. System stopping.")
             break
 
-    print("✅ Evolution completed successfully.")
+    print("Evolution completed successfully.")
     
     # Plot combined confidence progression for selected nodes
     plot_combined_progress(clusters)

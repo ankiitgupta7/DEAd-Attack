@@ -64,7 +64,7 @@ class Node:
             if mutated_confidence >= config.target_confidence:
                 self.best_solution = mutated_image
                 self.save_image(mutated_image, gen, mutated_confidence)
-                print(f"✅ Node {self.node_id} found a solution with confidence {mutated_confidence:.4f}")
+                print(f"Node {self.node_id} found a solution with confidence {mutated_confidence:.4f}")
                 self.plot_confidence_progress()
                 return
 
@@ -75,7 +75,7 @@ class Node:
     def communicate_with_neighbors(self):
         """Exchange solutions with neighbors periodically."""
         for neighbor in self.buffer:
-            print(f"🔁 Node {self.node_id} is communicating with neighbors, sending its solution...")
+            print(f"Node {self.node_id} is communicating with neighbors, sending its solution...")
             neighbor_solution = neighbor.best_solution
             if neighbor_solution is not None:
                 neighbor_confidence = evaluate_fitness(neighbor_solution, self.model, self.target_class)
