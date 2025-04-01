@@ -16,10 +16,17 @@ def run_simulation(model, target_class):
     print("🔄 Starting evolution process...")
     
     # Run the evolution until a solution is found
-    while not candc.terminated:
+    for gen in range(config.max_generations):
         for _, nodes in clusters:
             for node in nodes:
                 node.evolve()
-        candc.check_termination()
-    
+        
+        if gen % config.supernode_sync_interval == 0:
+            for supernode, _ in clusters:
+                supernode.sync_with_peers()
+
+        if candc.check_termination():
+            print("✅ Termination condition met. System stopping.")
+            break
+
     print("✅ Evolution completed successfully.")

@@ -1,9 +1,9 @@
 # /config/config.py
 
 # System parameters
-clusters = 3               # Number of clusters (super-nodes)
-nodes_per_cluster = 20     # Nodes per cluster
-neighbors_per_node = 5     # Number of neighbors per node
+clusters = 5               # Number of clusters (super-nodes)
+nodes_per_cluster = 6     # Nodes per cluster
+neighbors_per_node = 3     # Number of neighbors per node
 
 # Evolution parameters
 population_size = 50       # Population size per node
