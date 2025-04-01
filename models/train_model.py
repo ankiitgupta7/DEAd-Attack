@@ -1,15 +1,15 @@
 # /models/train_model.py
 import numpy as np
 from sklearn.datasets import load_digits
-from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 import joblib
 
 def train_model():
     digits = load_digits()
     X, y = digits.data, digits.target
     
-    # Train logistic regression on 8x8 digit dataset
-    model = LogisticRegression(max_iter=5000, solver='lbfgs', multi_class='auto')
+    # Train SVM with probability enabled
+    model = SVC(probability=True)
     model.fit(X, y)
     
     # Save trained model

@@ -1,6 +1,7 @@
 # /core/candc.py
 from utils.evaluation import evaluate_fitness
-import config
+from config import config
+
 
 class CommandAndControl:
     def __init__(self):

@@ -1,7 +1,8 @@
 # /main.py
 from models.load_model import load_trained_model
 from simulation.run_simulation import run_simulation
-import config
+from config import config
+
 
 if __name__ == "__main__":
     # Load the trained model

@@ -1,7 +1,7 @@
 # /simulation/cluster.py
 from core.node import Node
 from core.supernode import SuperNode
-import config
+from config import config
 
 def initialize_clusters(model, target_class):
     clusters = []
