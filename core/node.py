@@ -27,50 +27,46 @@ class Node:
         self.confidence_progress = []
 
     def initialize_population(self):
-        return np.random.randint(0, config.pixel_max + 1, (config.image_height, config.image_width))
+        shape = (config.image_height, config.image_width)
+        return np.random.randint(0, config.pixel_max + 1, shape)
+
 
     def save_image(self, image, gen, confidence, round_num=None):
-        # Root: e.g. 'results/digits_SVM'
-        experiment_dir = get_experiment_root()
-
-        # Subfolder for this node: 'results/digits_SVM/C0-N3'
-        node_folder = os.path.join(experiment_dir, self.global_id)
-
-        # If we have a round number, nest further: 'results/digits_SVM/C0-N3/R2'
+        """Save the evolved image with round-specific folder."""
+        base_dir = get_experiment_root()  # e.g., results/mnist_SVM
         if round_num is not None:
-            node_folder = os.path.join(node_folder, f"R{round_num}")
+            output_dir = os.path.join(base_dir, f"R{round_num}", self.global_id)
+        else:
+            output_dir = os.path.join(base_dir, self.global_id)
 
-        os.makedirs(node_folder, exist_ok=True)
-
-        # e.g. R2_C0-N3_gen_5_conf_0.8123.png
-        tag = f"R{round_num}_" if round_num is not None else ""
-        filename = f"{tag}{self.global_id}_gen_{gen}_conf_{confidence:.4f}.png"
+        os.makedirs(output_dir, exist_ok=True)
+        filename = f"{self.global_id}_gen_{gen}.png"
 
         plt.imshow(image, cmap='gray')
         plt.title(f"{self.global_id} - Gen {gen} - Conf: {confidence:.4f}")
         plt.axis('off')
-        plt.savefig(os.path.join(node_folder, filename))
+        plt.savefig(os.path.join(output_dir, filename))
         plt.close()
 
     def plot_confidence_progress(self, round_num=None):
-        experiment_dir = get_experiment_root()
-
-        # For storing the confidence plot in e.g. 'results/digits_SVM/C0-N3'
-        node_folder = os.path.join(experiment_dir, self.global_id)
+        """Plot confidence over generations with proper experiment path."""
+        base_dir = get_experiment_root()
         if round_num is not None:
-            node_folder = os.path.join(node_folder, f"R{round_num}")
-        os.makedirs(node_folder, exist_ok=True)
+            output_dir = os.path.join(base_dir, f"R{round_num}", self.global_id)
+        else:
+            output_dir = os.path.join(base_dir, self.global_id)
+
+        os.makedirs(output_dir, exist_ok=True)
+        filename = f"{self.global_id}_confidence.png"
 
         plt.plot(self.confidence_progress, label=f"{self.global_id}")
         plt.xlabel("Generation")
         plt.ylabel("Confidence")
         plt.title(f"Confidence Progress - {self.global_id}")
         plt.legend()
-
-        tag = f"R{round_num}_" if round_num is not None else ""
-        filename = f"{tag}{self.global_id}_confidence.png"
-        plt.savefig(os.path.join(node_folder, filename))
+        plt.savefig(os.path.join(output_dir, filename))
         plt.close()
+
 
 
     def communicate_with_neighbors(self):
