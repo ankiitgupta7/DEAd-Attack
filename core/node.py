@@ -1,11 +1,11 @@
 # /core/node.py
-
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 from utils.mutation import mutate
 from utils.evaluation import evaluate_fitness
 from config import config
+from config.paths import get_experiment_root
 
 class Node:
     def __init__(self, cluster_id, local_node_id, model, target_class):
@@ -16,45 +16,60 @@ class Node:
         self.model = model
         self.target_class = target_class
 
-        # Use shape/pixel from config
         self.image_height = config.image_height
         self.image_width = config.image_width
         self.pixel_max = config.pixel_max
 
-        self.population = self.initialize_population()  # or self.init_population()
+        self.population = self.initialize_population()
         self.buffer = []
         self.best_solution = None
         self.best_fitness = 0.0
         self.confidence_progress = []
 
     def initialize_population(self):
-        # Create random image in [0, self.pixel_max], shape = (height, width)
-        return np.random.randint(
-            low=0, high=self.pixel_max+1,
-            size=(self.image_height, self.image_width)
-        )
+        return np.random.randint(0, config.pixel_max + 1, (config.image_height, config.image_width))
 
     def save_image(self, image, gen, confidence, round_num=None):
-        output_dir = f"output_images/R{round_num}/{self.global_id}" if round_num is not None else f"output_images/{self.global_id}"
-        os.makedirs(output_dir, exist_ok=True)
+        # Root: e.g. 'results/digits_SVM'
+        experiment_dir = get_experiment_root()
+
+        # Subfolder for this node: 'results/digits_SVM/C0-N3'
+        node_folder = os.path.join(experiment_dir, self.global_id)
+
+        # If we have a round number, nest further: 'results/digits_SVM/C0-N3/R2'
+        if round_num is not None:
+            node_folder = os.path.join(node_folder, f"R{round_num}")
+
+        os.makedirs(node_folder, exist_ok=True)
+
+        # e.g. R2_C0-N3_gen_5_conf_0.8123.png
         tag = f"R{round_num}_" if round_num is not None else ""
-        filename = f"{tag}{self.global_id}_gen_{gen}.png"
-        
+        filename = f"{tag}{self.global_id}_gen_{gen}_conf_{confidence:.4f}.png"
+
         plt.imshow(image, cmap='gray')
         plt.title(f"{self.global_id} - Gen {gen} - Conf: {confidence:.4f}")
         plt.axis('off')
-        plt.savefig(os.path.join(output_dir, filename))
+        plt.savefig(os.path.join(node_folder, filename))
         plt.close()
 
     def plot_confidence_progress(self, round_num=None):
-        tag = f"R{round_num}_" if round_num is not None else ""
+        experiment_dir = get_experiment_root()
+
+        # For storing the confidence plot in e.g. 'results/digits_SVM/C0-N3'
+        node_folder = os.path.join(experiment_dir, self.global_id)
+        if round_num is not None:
+            node_folder = os.path.join(node_folder, f"R{round_num}")
+        os.makedirs(node_folder, exist_ok=True)
+
         plt.plot(self.confidence_progress, label=f"{self.global_id}")
         plt.xlabel("Generation")
         plt.ylabel("Confidence")
         plt.title(f"Confidence Progress - {self.global_id}")
         plt.legend()
+
+        tag = f"R{round_num}_" if round_num is not None else ""
         filename = f"{tag}{self.global_id}_confidence.png"
-        plt.savefig(os.path.join("output_images", filename))
+        plt.savefig(os.path.join(node_folder, filename))
         plt.close()
 
 
