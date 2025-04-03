@@ -28,12 +28,12 @@ class SuperNode:
                         node.best_solution = peer_best.best_solution
                         print(f"🌐 SuperNode {self.supernode_id} pulled better solution from SuperNode {peer.supernode_id} for Node {node.global_id}")
 
-    def broadcast_best_solution(self):
-        """(Optional) Broadcast best solution to all local nodes."""
-        best_node = self.get_best_node()
-        for node in self.nodes:
-            if node != best_node and best_node.best_fitness > node.best_fitness:
-                node.population = best_node.best_solution
-                node.best_fitness = best_node.best_fitness
-                node.best_solution = best_node.best_solution
-                print(f"📢 SuperNode {self.supernode_id}: Broadcast best solution to {node.global_id}")
+    # def broadcast_best_solution(self):
+    #     """(Optional) Broadcast best solution to all local nodes."""
+    #     best_node = self.get_best_node()
+    #     for node in self.nodes:
+    #         if node != best_node and best_node.best_fitness > node.best_fitness:
+    #             node.population = best_node.best_solution
+    #             node.best_fitness = best_node.best_fitness
+    #             node.best_solution = best_node.best_solution
+    #             print(f"📢 SuperNode {self.supernode_id}: Broadcast best solution to {node.global_id}")
