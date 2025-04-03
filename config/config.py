@@ -1,21 +1,31 @@
 # /config/config.py
 
 # System parameters
-clusters = 3               # Number of clusters (super-nodes)
-nodes_per_cluster =10     # Nodes per cluster
-neighbors_per_node = 3     # Number of neighbors per node
+clusters = 5
+nodes_per_cluster = 6
+neighbors_per_node = 3
 
 # Evolution parameters
-population_size = 50       # Population size per node
-mutation_rate = 0.5       # Mutation rate for pixel modifications
-max_generations = 50       # Max generations before termination
-target_confidence = 0.99 # Confidence threshold to terminate
+population_size = 50
+mutation_rate = 0.5
+max_generations = 500
+target_confidence = 0.999
 
 # Communication parameters
-buffer_size = 10           # Buffer size for neighbor solutions
-communication_interval = 5 # Interval to push solutions to neighbors
-supernode_sync_interval = 1 # Super-node solution sync interval
+buffer_size = 10
+communication_interval = 5
+supernode_sync_interval = 10
 
 # Fault tolerance
-failure_rate = 0.02        # Probability of node failure
-recovery_time = 3          # Time to reassign tasks upon failure
+failure_rate = 0.02
+recovery_time = 3
+
+# Dataset & Model Info
+dataset_name = "mnist" #"digits"    # or "mnist", "fashion_mnist", etc.
+model_name = "SVM"
+
+# After training, these will be set automatically
+model_file = None
+image_height = 8
+image_width = 8
+pixel_max = 16  # for digits dataset

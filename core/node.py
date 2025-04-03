@@ -15,14 +15,24 @@ class Node:
 
         self.model = model
         self.target_class = target_class
-        self.population = self.initialize_population()
+
+        # Use shape/pixel from config
+        self.image_height = config.image_height
+        self.image_width = config.image_width
+        self.pixel_max = config.pixel_max
+
+        self.population = self.initialize_population()  # or self.init_population()
         self.buffer = []
         self.best_solution = None
         self.best_fitness = 0.0
         self.confidence_progress = []
 
     def initialize_population(self):
-        return np.random.randint(0, 17, (8, 8))
+        # Create random image in [0, self.pixel_max], shape = (height, width)
+        return np.random.randint(
+            low=0, high=self.pixel_max+1,
+            size=(self.image_height, self.image_width)
+        )
 
     def save_image(self, image, gen, confidence, round_num=None):
         output_dir = f"output_images/R{round_num}/{self.global_id}" if round_num is not None else f"output_images/{self.global_id}"

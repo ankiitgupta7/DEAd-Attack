@@ -9,7 +9,7 @@ if __name__ == "__main__":
     model = load_trained_model()
     
     # Define target class to attack
-    target_class = 9  # Example: Trick classifier into predicting '8' instead of another digit
+    target_class = 0  # Example: Trick classifier into predicting '8' instead of another digit
     
     # Run the simulation
     run_simulation(model, target_class)
