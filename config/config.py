@@ -9,7 +9,7 @@ neighbors_per_node = 3
 # population_size = 50
 mutation_rate = 0.5
 max_generations = 100
-target_confidence = 0.25
+target_confidence = 0.995
 
 # Communication parameters
 buffer_size = 10
@@ -21,7 +21,7 @@ failure_rate = 0.02
 recovery_time = 3
 
 # Dataset & Model Info
-dataset_name = "mnist"  # or #"digits", "mnist", "fashion_mnist", etc.
+dataset_name = "fashion_mnist"  # or #"digits", "mnist", "fashion_mnist", etc.
 model_name = "SVM"
 
 # After training, these will be set automatically

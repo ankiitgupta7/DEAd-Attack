@@ -9,6 +9,7 @@ __pycache__/
 # custom
 output*
 *.pkl
+*.png
 results/
 
 # Distribution / packaging
