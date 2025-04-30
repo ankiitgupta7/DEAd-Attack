@@ -8,7 +8,7 @@ neighbors_per_node = 3
 # Evolution parameters
 # population_size = 50
 mutation_rate = 0.5
-max_generations = 100
+max_generations = 20
 target_confidence = 0.95
 
 # Communication parameters

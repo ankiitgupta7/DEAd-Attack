@@ -33,4 +33,4 @@ if __name__ == "__main__":
 
     # Load model and run simulation
     model = load_trained_model()
-    run_simulation(model, target_class=args.target_class, replicate_id=args.replicate)
+    run_simulation(model, target_class=args.target_class)

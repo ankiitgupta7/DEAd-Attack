@@ -1,110 +1,77 @@
-# /simulation/run_simulation.py
 import matplotlib.pyplot as plt
-from simulation.cluster import initialize_clusters
-from core.candc import CommandAndControl
-from config import config
-from utils.evaluation import evaluate_fitness
-from config.paths import get_experiment_root
+import csv
 import os
 import math
 import networkx as nx
 from tqdm import tqdm
 from itertools import count
 
+from simulation.cluster import initialize_clusters
+from core.candc import CommandAndControl
+from config import config
+from utils.evaluation import evaluate_fitness
+from config.paths import get_experiment_root
 
-import math
-import os
-import networkx as nx
-import matplotlib.pyplot as plt
 
 def visualize_topology(clusters, out_path="topology.png"):
-    """
-    Visualization that doesn't 'hard-code' a node as supernode:
-    - For cluster i, the supernode is shown as a separate red node labeled S{i}
-    - The cluster's normal nodes are in skyblue
-    - Edges for neighbor connections are black
-    - Supernodes form a ring in magenta edges
-    - No references to best node or node[0]
-    """
-
     G = nx.Graph()
     positions = {}
     node_colors = {}
-
     n_clusters = len(clusters)
+    R = 10  # outer ring radius
 
-    # --- 1) Place supernodes in a big ring (radius=10) ---
-    R = 10
+    # Supernodes
     supernode_labels = []
     for i, (supernode, nodes) in enumerate(clusters):
-        s_label = f"S{supernode.supernode_id}"  # e.g. S0, S1, ...
+        s_label = f"S{supernode.supernode_id}"
         supernode_labels.append(s_label)
 
         angle = 2 * math.pi * i / n_clusters
         x = R * math.cos(angle)
         y = R * math.sin(angle)
 
-        # Add to the graph
         G.add_node(s_label)
         positions[s_label] = (x, y)
-        # We'll color supernodes red
         node_colors[s_label] = "red"
 
-    # --- 2) Connect supernodes in a ring with magenta edges ---
+    # Supernode connections
     for i in range(n_clusters):
         s1 = supernode_labels[i]
         s2 = supernode_labels[(i + 1) % n_clusters]
         G.add_edge(s1, s2, color="magenta")
 
-    # --- 3) Place cluster nodes around each supernode (small ring radius=3) ---
     cluster_radius = 3
-
     for i, (supernode, nodes) in enumerate(clusters):
         s_label = f"S{supernode.supernode_id}"
         sx, sy = positions[s_label]
         n_nodes = len(nodes)
 
         for j, node in enumerate(nodes):
-            # place each cluster node around the supernode
             angle = 2 * math.pi * j / n_nodes
             rx = sx + cluster_radius * math.cos(angle)
             ry = sy + cluster_radius * math.sin(angle)
 
-            # Insert into graph
             G.add_node(node.global_id)
             positions[node.global_id] = (rx, ry)
-            node_colors[node.global_id] = "skyblue"  # normal cluster node
+            node_colors[node.global_id] = "skyblue"
 
-            # Add edges for neighbor connections (black)
             for neighbor in node.buffer:
                 if not G.has_edge(node.global_id, neighbor.global_id):
                     G.add_edge(node.global_id, neighbor.global_id, color="black")
 
-        # If you DO want an edge from supernode to each cluster node, do:
-        for node in nodes:
             G.add_edge(s_label, node.global_id, color="gray")
 
-    # --- 4) Prepare to draw
     edge_colors = [G[u][v].get("color", "gray") for u, v in G.edges()]
     node_color_list = [node_colors[n] for n in G.nodes()]
-
     labels = {n: n for n in G.nodes()}
 
     plt.figure(figsize=(12, 8))
-    nx.draw(
-        G,
-        pos=positions,
-        labels=labels,
-        with_labels=True,
-        node_color=node_color_list,
-        edge_color=edge_colors,
-        node_size=1000,
-        font_size=8
-    )
+    nx.draw(G, pos=positions, labels=labels, with_labels=True,
+            node_color=node_color_list, edge_color=edge_colors,
+            node_size=1000, font_size=8)
     plt.title("Distributed System Topology: True Clusters & Supernodes")
     plt.axis("off")
 
-    # Ensure directory exists if out_path has a subdir
     out_dir = os.path.dirname(out_path)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
@@ -118,9 +85,9 @@ def visualize_topology(clusters, out_path="topology.png"):
 def plot_combined_progress(clusters):
     plt.figure(figsize=(10, 6))
     for supernode, nodes in clusters:
-        for node in nodes[:3]:  # first 3 nodes for clarity
+        for node in nodes[:3]:  # First 3 for simplicity
             plt.plot(node.confidence_progress, label=node.global_id)
-    
+
     plt.xlabel("Generation")
     plt.ylabel("Confidence")
     plt.title("Confidence Progress of Selected Nodes")
@@ -132,11 +99,9 @@ def plot_combined_progress(clusters):
     plt.savefig(outfile)
     plt.close()
 
-def print_summary(clusters):
-    from utils.evaluation import evaluate_fitness
 
-    summary_lines = []
-    summary_lines.append("\n📊 Summary of Final Best Solutions:\n")
+def print_summary(clusters):
+    summary_lines = ["\n📊 Summary of Final Best Solutions:\n"]
     for supernode, nodes in clusters:
         for node in nodes:
             if node.best_solution is not None:
@@ -150,59 +115,73 @@ def print_summary(clusters):
     with open(summary_file, "w") as f:
         f.writelines(summary_lines)
 
-    # Also print to console
     print("".join(summary_lines))
 
-def run_simulation(model, target_class, replicate_id):
-    print("🔄 Starting evolution process...")
 
+def run_simulation(model, target_class):
     clusters = initialize_clusters(model, target_class)
-    visualize_topology(clusters, out_path="topology.png")
+    visualize_topology(clusters, out_path=os.path.join(get_experiment_root(), "topology.png"))
     candc = CommandAndControl()
 
-    # Link supernodes
-    supernodes = [supernode for supernode, _ in clusters]
-    for supernode in supernodes:
-        supernode.set_peers(supernodes)
+    supernodes = [s for s, _ in clusters]
+    for sn in supernodes:
+        sn.set_peers(supernodes)
 
-    # Register nodes
     for _, nodes in clusters:
         for node in nodes:
             candc.assign_node(node)
 
-    # ✅ Outer tqdm for rounds
-    for round_num in tqdm(count(), desc="🌱 Rounds", position=0, leave=True):
+    # Create CSV to track all node confidences
+    experiment_dir = get_experiment_root()
+    os.makedirs(experiment_dir, exist_ok=True)
+    csv_path = os.path.join(experiment_dir, f"confidence_log.csv")
+
+    csv_file = open(csv_path, "w", newline="")
+    writer = csv.writer(csv_file)
+    writer.writerow(["node", "round", "cumulative_generation", "confidence"])
+
+    cumulative_gens = {node.global_id: 0 for _, nodes in clusters for node in nodes}
+
+    for round_num in tqdm(count(), desc="🌱 Rounds", position=0):
         if candc.terminated:
             break
 
-        # ✅ Inner tqdm for nodes within round
         all_nodes = [node for _, nodes in clusters for node in nodes]
-        with tqdm(all_nodes, desc=f"⚙️  Evolving Nodes (Round {round_num})", position=1, leave=False) as node_bar:
-            for node in node_bar:
-                node.evolve(round_num=round_num)
+        with tqdm(all_nodes, desc=f"⚙️ Round {round_num}", position=1, leave=False) as bar:
+            for node in bar:
+                node.evolve(round_num)
                 candc.check_termination()
                 if candc.terminated:
-                    node_bar.set_description("🎯 Termination triggered")
                     break
 
-        # 📊 Track & show confidence live in outer tqdm
-        best_conf = 0.0
+        # Log CSV data for this round
         for _, nodes in clusters:
             for node in nodes:
-                if node.best_solution is not None:
-                    conf = evaluate_fitness(node.best_solution, node.model, node.target_class)
-                    best_conf = max(best_conf, conf)
+                for i, conf in enumerate(node.confidence_progress):
+                    writer.writerow([
+                        node.global_id,
+                        round_num,
+                        cumulative_gens[node.global_id] + i,
+                        round(conf, 6)
+                    ])
+                    # print(f"Node {node.global_id} | Round {round_num} | Gen {cumulative_gens[node.global_id] + i} | Confidence: {round(conf, 6)}")
+                    # print(f"✔️ Logged {len(node.confidence_progress)} entries for {node.global_id} (Round {round_num})")
 
-        tqdm.write(f"Round {round_num} done. Best confidence so far: {best_conf:.4f}")
-        tqdm._instances.clear()  # fixes overlapping bars sometimes
+                    csv_file.flush()
+                cumulative_gens[node.global_id] += len(node.confidence_progress)
+                node.confidence_progress = []
 
-        # 🔁 Supernode sync
+        # Show best confidence live
+        best_conf = max(
+            evaluate_fitness(node.best_solution, node.model, node.target_class)
+            for _, nodes in clusters for node in nodes if node.best_solution is not None
+        )
+        tqdm.write(f"Round {round_num} complete | Best Confidence: {best_conf:.4f}")
+
         if round_num % config.supernode_sync_interval == 0:
             for supernode, _ in clusters:
                 supernode.sync_with_peers()
 
-    # Wrap up
+    csv_file.close()
     plot_combined_progress(clusters)
     print_summary(clusters)
-
-    
