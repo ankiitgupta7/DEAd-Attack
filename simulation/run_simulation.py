@@ -117,7 +117,6 @@ def print_summary(clusters):
 
     print("".join(summary_lines))
 
-
 def run_simulation(model, target_class):
     clusters = initialize_clusters(model, target_class)
     visualize_topology(clusters, out_path=os.path.join(get_experiment_root(), "topology.png"))
@@ -138,7 +137,10 @@ def run_simulation(model, target_class):
 
     csv_file = open(csv_path, "w", newline="")
     writer = csv.writer(csv_file)
-    writer.writerow(["node", "round", "cumulative_generation", "confidence"])
+    writer.writerow([
+        "node", "round", "cumulative_generation", "confidence",
+        "total_cumulative_generations", "best_confidence_global"
+    ])
 
     cumulative_gens = {node.global_id: 0 for _, nodes in clusters for node in nodes}
 
@@ -154,28 +156,32 @@ def run_simulation(model, target_class):
                 if candc.terminated:
                     break
 
+        # ✅ Compute best_conf before using it in the log
+        best_conf = 0.0
+        for _, nodes in clusters:
+            for node in nodes:
+                if node.best_solution is not None:
+                    conf = evaluate_fitness(node.best_solution, node.model, node.target_class)
+                    best_conf = max(best_conf, conf)
+
         # Log CSV data for this round
         for _, nodes in clusters:
             for node in nodes:
                 for i, conf in enumerate(node.confidence_progress):
+                    cumulative_gen = cumulative_gens[node.global_id] + i
+                    total_gens_so_far = sum(cumulative_gens.values()) + i
                     writer.writerow([
                         node.global_id,
                         round_num,
-                        cumulative_gens[node.global_id] + i,
-                        round(conf, 6)
+                        cumulative_gen,
+                        round(conf, 6),
+                        total_gens_so_far,
+                        round(best_conf, 6)
                     ])
-                    # print(f"Node {node.global_id} | Round {round_num} | Gen {cumulative_gens[node.global_id] + i} | Confidence: {round(conf, 6)}")
-                    # print(f"✔️ Logged {len(node.confidence_progress)} entries for {node.global_id} (Round {round_num})")
-
                     csv_file.flush()
                 cumulative_gens[node.global_id] += len(node.confidence_progress)
                 node.confidence_progress = []
 
-        # Show best confidence live
-        best_conf = max(
-            evaluate_fitness(node.best_solution, node.model, node.target_class)
-            for _, nodes in clusters for node in nodes if node.best_solution is not None
-        )
         tqdm.write(f"Round {round_num} complete | Best Confidence: {best_conf:.4f}")
 
         if round_num % config.supernode_sync_interval == 0:
