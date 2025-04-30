@@ -8,6 +8,8 @@ from config.paths import get_experiment_root
 import os
 import math
 import networkx as nx
+from tqdm import tqdm
+from itertools import count
 
 
 import math
@@ -151,48 +153,56 @@ def print_summary(clusters):
     # Also print to console
     print("".join(summary_lines))
 
-def run_simulation(model, target_class):
+def run_simulation(model, target_class, replicate_id):
     print("🔄 Starting evolution process...")
 
     clusters = initialize_clusters(model, target_class)
-
-    # Visualize the initial topology
     visualize_topology(clusters, out_path="topology.png")
-
-
     candc = CommandAndControl()
 
-    # Link supernodes as peers
+    # Link supernodes
     supernodes = [supernode for supernode, _ in clusters]
     for supernode in supernodes:
         supernode.set_peers(supernodes)
 
-    # Register all nodes
+    # Register nodes
     for _, nodes in clusters:
         for node in nodes:
             candc.assign_node(node)
 
-    round_num = 0
-    while not candc.terminated:
-        print(f"\n🌀 Round {round_num}")
-        for _, nodes in clusters:
-            for node in nodes:
+    # ✅ Outer tqdm for rounds
+    for round_num in tqdm(count(), desc="🌱 Rounds", position=0, leave=True):
+        if candc.terminated:
+            break
+
+        # ✅ Inner tqdm for nodes within round
+        all_nodes = [node for _, nodes in clusters for node in nodes]
+        with tqdm(all_nodes, desc=f"⚙️  Evolving Nodes (Round {round_num})", position=1, leave=False) as node_bar:
+            for node in node_bar:
                 node.evolve(round_num=round_num)
                 candc.check_termination()
                 if candc.terminated:
-                    print("🎯 A node has reached the threshold. Stopping now.")
+                    node_bar.set_description("🎯 Termination triggered")
                     break
-            if candc.terminated:
-                break
 
-        # Supernode communication
+        # 📊 Track & show confidence live in outer tqdm
+        best_conf = 0.0
+        for _, nodes in clusters:
+            for node in nodes:
+                if node.best_solution is not None:
+                    conf = evaluate_fitness(node.best_solution, node.model, node.target_class)
+                    best_conf = max(best_conf, conf)
+
+        tqdm.write(f"Round {round_num} done. Best confidence so far: {best_conf:.4f}")
+        tqdm._instances.clear()  # fixes overlapping bars sometimes
+
+        # 🔁 Supernode sync
         if round_num % config.supernode_sync_interval == 0:
-            print(f"\n🌐 Supernode syncing at round {round_num}")
             for supernode, _ in clusters:
                 supernode.sync_with_peers()
 
-        round_num += 1
-
-    print("\n✅ Simulation ended (terminated =", candc.terminated, ")")
+    # Wrap up
     plot_combined_progress(clusters)
     print_summary(clusters)
+
+    

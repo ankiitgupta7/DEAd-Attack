@@ -26,7 +26,7 @@ class SuperNode:
                         node.population = peer_best.best_solution
                         node.best_fitness = peer_best.best_fitness
                         node.best_solution = peer_best.best_solution
-                        print(f"🌐 SuperNode {self.supernode_id} pulled better solution from SuperNode {peer.supernode_id} for Node {node.global_id}")
+                        # print(f"🌐 SuperNode {self.supernode_id} pulled better solution from SuperNode {peer.supernode_id} for Node {node.global_id}")
 
     # def broadcast_best_solution(self):
     #     """(Optional) Broadcast best solution to all local nodes."""

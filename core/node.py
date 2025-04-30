@@ -78,7 +78,7 @@ class Node:
                     self.population = neighbor.best_solution
                     self.best_fitness = neighbor_conf
                     self.best_solution = neighbor.best_solution
-                    print(f"📬 {self.global_id} adopted better solution from {neighbor.global_id} (conf={neighbor_conf:.4f})")
+                    # print(f"📬 {self.global_id} adopted better solution from {neighbor.global_id} (conf={neighbor_conf:.4f})")
 
     def evolve(self, round_num=None):
         for gen in range(config.max_generations):
@@ -100,7 +100,7 @@ class Node:
                 self.best_solution = mutated_image
 
             if mutated_confidence >= config.target_confidence:
-                print(f"🎯 {self.global_id} found a solution with confidence {mutated_confidence:.4f}")
+                # print(f"🎯 {self.global_id} found a solution with confidence {mutated_confidence:.4f}")
                 self.save_image(mutated_image, gen, mutated_confidence, round_num)
                 self.plot_confidence_progress(round_num)
                 return
