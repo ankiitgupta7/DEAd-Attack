@@ -5,7 +5,9 @@ from config import config
 
 def get_experiment_root():
     """
-    E.g. 'results6x5/fashion_mnist_SVM/rep3'
+    E.g. 'results/fashion_mnist_SVM/rep3'
     """
     base = f"{config.dataset_name}_{config.model_name}"
-    return os.path.join("results", base, f"rep{config.replicate}")
+    target = f"target{config.target_class}"
+    nodes = f"{config.clusters}x{config.nodes_per_cluster}"
+    return os.path.join(f"results{nodes}", base, target, f"rep{config.replicate}")

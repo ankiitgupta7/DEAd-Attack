@@ -88,8 +88,8 @@ class Node:
 
             self.confidence_progress.append(current_confidence)
 
-            if gen % 5 == 0 or mutated_confidence >= config.target_confidence:
-                self.save_image(mutated_image, gen, mutated_confidence, round_num)
+            # if gen % 5 == 0 or mutated_confidence >= config.target_confidence:
+            #     self.save_image(mutated_image, gen, mutated_confidence, round_num)
 
             if mutated_confidence > current_confidence:
                 self.population = mutated_image

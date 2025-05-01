@@ -27,6 +27,7 @@ if __name__ == "__main__":
     config.nodes_per_cluster = args.nodes_per_cluster
     config.dataset_name = args.dataset_name
     config.model_name = args.model_name
+    config.target_class = args.target_class
     config.replicate = args.replicate  # if used elsewhere
 
     print(f"🚀 Starting replicate {args.replicate} | Setup: {args.clusters}x{args.nodes_per_cluster} | Dataset: {args.dataset_name} | Model: {args.model_name}")

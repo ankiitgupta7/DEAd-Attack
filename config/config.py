@@ -23,6 +23,7 @@ recovery_time = 3
 # Dataset & Model Info
 dataset_name = "fashion_mnist"  # or #"digits", "mnist", "fashion_mnist", etc.
 model_name = "SVM"
+target_class = 0  # default target class for evolution
 
 # replicate ID (for logging purposes)
 replicate = 1
